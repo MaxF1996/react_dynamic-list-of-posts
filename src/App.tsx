@@ -112,11 +112,11 @@ export const App = () => {
               'is-parent',
               'is-8-desktop',
               'Sidebar',
-              { 'is-open': openedPost },
+              { 'Sidebar--open': openedPost },
             )}
           >
             <div className="tile is-child box is-success">
-              {openedPost && <PostDetails />}
+              {openedPost && <PostDetails post={openedPost} />}
             </div>
           </div>
         </div>

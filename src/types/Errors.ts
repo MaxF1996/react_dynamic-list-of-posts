@@ -3,4 +3,5 @@ export enum Errors {
   PostsLoading = 'PostsLoading',
   NoPosts = 'NoPosts',
   CommentsLoading = 'CommentsLoading',
+  NoComments = 'NoComments',
 }

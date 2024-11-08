@@ -45,7 +45,7 @@ export const PostsList: React.FC<Props> = ({
                   type="button"
                   data-cy="PostButton"
                   className={classNames('button is-link', {
-                    'is-light': openedPost && openedPost.id === post.id,
+                    'is-light': !openedPost || openedPost.id !== post.id,
                   })}
                   onClick={() => handlePostClick(post)}
                 >
