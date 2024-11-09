@@ -104,15 +104,13 @@ export const NewCommentForm: React.FC<Props> = ({ postId, setComments }) => {
       email: currentEmail,
       body: currentBody,
       postId: postId,
-    })
-      .then((data: unknown) => {
-        const dataAsComment = data as Comment;
+    }).then((data: unknown) => {
+      const dataAsComment = data as Comment;
 
-        setComments(prevComments => [...prevComments, dataAsComment]);
-        resetForm('submit');
-        setIsAddingComment(false);
-      })
-      .finally(() => {});
+      setComments(prevComments => [...prevComments, dataAsComment]);
+      resetForm('submit');
+      setIsAddingComment(false);
+    });
   }, [isAddingComment]);
 
   return (
