@@ -1,16 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { newComment } from '../api/newComment';
+import { Comment } from '../types/Comment';
 import classNames from 'classnames';
 
 type Props = {
-  setNewCommentCreating: (value: boolean) => void;
   postId: number;
+  setComments: React.Dispatch<React.SetStateAction<Comment[]>>;
 };
 
-export const NewCommentForm: React.FC<Props> = ({
-  setNewCommentCreating,
-  postId,
-}) => {
+export const NewCommentForm: React.FC<Props> = ({ postId, setComments }) => {
   const [currentName, setCurrentName] = useState('');
   const [currentEmail, setCurrentEmail] = useState('');
   const [currentBody, setCurrentBody] = useState('');
@@ -19,14 +17,17 @@ export const NewCommentForm: React.FC<Props> = ({
   const [isEmailError, setIsEmailError] = useState(false);
   const [isBodyError, setIsBodyError] = useState(false);
 
-  // const resetForm = () => {
-  //   setCurrentName('');
-  //   setCurrentEmail('');
-  //   setCurrentBody('');
-  //   setIsNameError(false);
-  //   setIsEmailError(false);
-  //   setIsBodyError(false);
-  // };
+  const resetForm = (reason: 'submit' | 'clear') => {
+    if (reason === 'clear') {
+      setCurrentName('');
+      setCurrentEmail('');
+    }
+
+    setCurrentBody('');
+    setIsNameError(false);
+    setIsEmailError(false);
+    setIsBodyError(false);
+  };
 
   const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setCurrentName(event.target.value);
@@ -50,7 +51,7 @@ export const NewCommentForm: React.FC<Props> = ({
   };
 
   const validateName = (testedName: string) => {
-    if (!testedName.trim().length) {
+    if (testedName.trim() === '') {
       setIsNameError(true);
     }
 
@@ -66,7 +67,7 @@ export const NewCommentForm: React.FC<Props> = ({
   };
 
   const validateCommentBody = (testedBody: string) => {
-    if (!testedBody.trim().length) {
+    if (testedBody.trim() === '') {
       setIsBodyError(true);
     }
 
@@ -84,13 +85,17 @@ export const NewCommentForm: React.FC<Props> = ({
 
     validateForm();
 
-    if (isNameError && isEmailError && isBodyError) {
+    if (
+      validateName(currentName) &&
+      validateEmail(currentEmail) &&
+      validateCommentBody(currentBody)
+    ) {
       setIsAddingComment(true);
     }
   };
 
   useEffect(() => {
-    if (!isAddingComment) {
+    if (!isAddingComment || isNameError || isEmailError || isBodyError) {
       return;
     }
 
@@ -100,8 +105,12 @@ export const NewCommentForm: React.FC<Props> = ({
       body: currentBody,
       postId: postId,
     })
-      .then(() => {
-        setNewCommentCreating(false);
+      .then((data: unknown) => {
+        const dataAsComment = data as Comment;
+
+        setComments(prevComments => [...prevComments, dataAsComment]);
+        resetForm('submit');
+        setIsAddingComment(false);
       })
       .finally(() => {});
   }, [isAddingComment]);
@@ -225,7 +234,11 @@ export const NewCommentForm: React.FC<Props> = ({
 
         <div className="control">
           {/* eslint-disable-next-line react/button-has-type */}
-          <button type="reset" className="button is-link is-light">
+          <button
+            type="reset"
+            className="button is-link is-light"
+            onClick={() => resetForm('clear')}
+          >
             Clear
           </button>
         </div>

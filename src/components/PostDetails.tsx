@@ -4,19 +4,33 @@ import { NewCommentForm } from './NewCommentForm';
 import { Post } from '../types/Post';
 import { Comment } from '../types/Comment';
 import { Errors } from '../types/Errors';
-import { getComments } from '../api/comments';
+import { getComments, deleteComment } from '../api/comments';
 
 type Props = {
   post: Post;
+  newCommentCreating: boolean;
+  setNewCommentCreating: (value: boolean) => void;
 };
 
-export const PostDetails: React.FC<Props> = ({ post }) => {
+export const PostDetails: React.FC<Props> = ({
+  post,
+  newCommentCreating,
+  setNewCommentCreating,
+}) => {
   const { id, title, body } = post;
 
   const [comments, setComments] = useState<Comment[]>([]);
   const [isCommentsLoading, setIsCommentsLoading] = useState(false);
   const [currentError, setCurrentError] = useState<Errors | null>(null);
-  const [newCommentCreating, setNewCommentCreating] = useState<boolean>(false);
+
+  const handleDeleteComment = (comment: Comment) => {
+    setComments(comments.filter(c => c.id !== comment.id));
+
+    deleteComment(comment.id).catch(() => {
+      setComments([...comments, comment]);
+      setCurrentError(Errors.CommentDeleting);
+    });
+  };
 
   useEffect(() => {
     if (!post) {
@@ -24,11 +38,14 @@ export const PostDetails: React.FC<Props> = ({ post }) => {
     }
 
     setIsCommentsLoading(true);
+    setComments([]);
 
     getComments(id)
       .then(setComments)
       .catch(() => setCurrentError(Errors.CommentsLoading))
-      .finally(() => setIsCommentsLoading(false));
+      .finally(() => {
+        setIsCommentsLoading(false);
+      });
   }, [post]);
 
   return (
@@ -43,19 +60,19 @@ export const PostDetails: React.FC<Props> = ({ post }) => {
         <div className="block">
           {isCommentsLoading && <Loader />}
 
-          {currentError === Errors.CommentsLoading && (
+          {currentError === Errors.CommentsLoading && !isCommentsLoading && (
             <div className="notification is-danger" data-cy="CommentsError">
               Something went wrong
             </div>
           )}
 
-          {comments.length === 0 && (
+          {comments.length === 0 && !isCommentsLoading && (
             <p className="title is-4" data-cy="NoCommentsMessage">
               No comments yet
             </p>
           )}
 
-          {comments.length > 0 && (
+          {!isCommentsLoading && comments.length > 0 && (
             <>
               <p className="title is-4">Comments:</p>
 
@@ -74,6 +91,7 @@ export const PostDetails: React.FC<Props> = ({ post }) => {
                       type="button"
                       className="delete is-small"
                       aria-label="delete"
+                      onClick={() => handleDeleteComment(comment)}
                     >
                       delete button
                     </button>
@@ -87,7 +105,7 @@ export const PostDetails: React.FC<Props> = ({ post }) => {
             </>
           )}
 
-          {!newCommentCreating && (
+          {!newCommentCreating && !isCommentsLoading && (
             <button
               data-cy="WriteCommentButton"
               type="button"
@@ -100,10 +118,7 @@ export const PostDetails: React.FC<Props> = ({ post }) => {
         </div>
 
         {newCommentCreating && (
-          <NewCommentForm
-            setNewCommentCreating={setNewCommentCreating}
-            postId={id}
-          />
+          <NewCommentForm postId={id} setComments={setComments} />
         )}
       </div>
     </div>

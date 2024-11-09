@@ -6,12 +6,14 @@ type Props = {
   posts: Post[];
   openedPost: Post | null;
   setOpenedPost: (post: Post | null) => void;
+  setNewCommentCreating: (value: boolean) => void;
 };
 
 export const PostsList: React.FC<Props> = ({
   posts,
   openedPost,
   setOpenedPost,
+  setNewCommentCreating,
 }) => {
   const handlePostClick = (post: Post) => {
     if (openedPost && openedPost.id === post.id) {
@@ -19,6 +21,8 @@ export const PostsList: React.FC<Props> = ({
     } else {
       setOpenedPost(post);
     }
+
+    setNewCommentCreating(false);
   };
 
   return (

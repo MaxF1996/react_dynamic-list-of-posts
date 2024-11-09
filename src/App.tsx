@@ -25,6 +25,7 @@ export const App = () => {
   const [currentError, setCurrentError] = useState<Errors | null>(null);
   const [userPosts, setUserPosts] = useState<Post[] | null>(null);
   const [openedPost, setOpenedPost] = useState<Post | null>(null);
+  const [newCommentCreating, setNewCommentCreating] = useState<boolean>(false);
 
   useEffect(() => {
     getUsers()
@@ -99,6 +100,7 @@ export const App = () => {
                     posts={userPosts}
                     openedPost={openedPost}
                     setOpenedPost={setOpenedPost}
+                    setNewCommentCreating={setNewCommentCreating}
                   />
                 )}
               </div>
@@ -116,7 +118,13 @@ export const App = () => {
             )}
           >
             <div className="tile is-child box is-success">
-              {openedPost && <PostDetails post={openedPost} />}
+              {openedPost && (
+                <PostDetails
+                  post={openedPost}
+                  newCommentCreating={newCommentCreating}
+                  setNewCommentCreating={setNewCommentCreating}
+                />
+              )}
             </div>
           </div>
         </div>
