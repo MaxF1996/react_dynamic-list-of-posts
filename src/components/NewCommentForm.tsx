@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { newComment } from '../api/newComment';
 import { Comment } from '../types/Comment';
 import classNames from 'classnames';
+import { Errors } from '../types/Errors';
 
 type Props = {
   postId: number;
@@ -16,6 +17,7 @@ export const NewCommentForm: React.FC<Props> = ({ postId, setComments }) => {
   const [isNameError, setIsNameError] = useState(false);
   const [isEmailError, setIsEmailError] = useState(false);
   const [isBodyError, setIsBodyError] = useState(false);
+  const [currentError, setCurrentError] = useState<Errors | null>(null);
 
   const resetForm = (reason: 'submit' | 'clear') => {
     if (reason === 'clear') {
@@ -75,47 +77,63 @@ export const NewCommentForm: React.FC<Props> = ({ postId, setComments }) => {
   };
 
   const validateForm = () => {
-    validateName(currentName);
-    validateEmail(currentEmail);
-    validateCommentBody(currentBody);
+    const nameValid = validateName(currentName);
+    const emailValid = validateEmail(currentEmail);
+    const bodyValid = validateCommentBody(currentBody);
+
+    return nameValid && emailValid && bodyValid;
   };
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    validateForm();
-
-    if (
-      validateName(currentName) &&
-      validateEmail(currentEmail) &&
-      validateCommentBody(currentBody)
-    ) {
+    if (validateForm()) {
       setIsAddingComment(true);
     }
   };
 
   useEffect(() => {
-    if (!isAddingComment || isNameError || isEmailError || isBodyError) {
+    if (!isAddingComment) {
       return;
     }
+
+    setCurrentError(null);
 
     newComment({
       name: currentName,
       email: currentEmail,
       body: currentBody,
       postId: postId,
-    }).then((data: unknown) => {
-      const dataAsComment = data as Comment;
+    })
+      .then((data: unknown) => {
+        const dataAsComment = data as Comment;
 
-      setComments(prevComments => [...prevComments, dataAsComment]);
-      resetForm('submit');
-      setIsAddingComment(false);
-    });
+        if (!dataAsComment || !dataAsComment.id) {
+          setCurrentError(Errors.CommentCreating);
+          setIsAddingComment(false);
+
+          return;
+        }
+
+        setComments(prevComments => [...prevComments, dataAsComment]);
+        resetForm('submit');
+        setIsAddingComment(false);
+      })
+      .catch(() => {
+        setCurrentError(Errors.CommentCreating);
+        setIsAddingComment(false);
+      });
   }, [isAddingComment]);
 
   return (
     <form data-cy="NewCommentForm" onSubmit={handleSubmit}>
       <div className="field" data-cy="NameField">
+        {currentError === Errors.CommentCreating && (
+          <div className="notification is-danger" data-cy="CommentsError">
+            Something went wrong while creating a new comment
+          </div>
+        )}
+
         <label className="label" htmlFor="comment-author-name">
           Author Name
         </label>

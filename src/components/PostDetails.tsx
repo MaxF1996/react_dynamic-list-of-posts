@@ -24,12 +24,23 @@ export const PostDetails: React.FC<Props> = ({
   const [currentError, setCurrentError] = useState<Errors | null>(null);
 
   const handleDeleteComment = (comment: Comment) => {
+    setCurrentError(null);
     setComments(comments.filter(c => c.id !== comment.id));
 
-    deleteComment(comment.id).catch(() => {
-      setComments([...comments, comment]);
+    const restoreDeletedComment = () => {
+      setComments(prevComments => [...prevComments, comment]);
       setCurrentError(Errors.CommentDeleting);
-    });
+    };
+
+    deleteComment(comment.id)
+      .then((response: unknown) => {
+        if (response && typeof response === 'object' && 'error' in response) {
+          restoreDeletedComment();
+        }
+      })
+      .catch(() => {
+        restoreDeletedComment();
+      });
   };
 
   useEffect(() => {
@@ -37,11 +48,24 @@ export const PostDetails: React.FC<Props> = ({
       return;
     }
 
+    setCurrentError(null);
     setIsCommentsLoading(true);
     setComments([]);
 
     getComments(id)
-      .then(setComments)
+      .then(response => {
+        if (Array.isArray(response) && response.length > 0) {
+          setComments(response);
+        }
+
+        if (!Array.isArray(response)) {
+          setCurrentError(Errors.CommentsLoading);
+        }
+
+        if (Array.isArray(response) && response.length === 0) {
+          setCurrentError(Errors.NoComments);
+        }
+      })
       .catch(() => setCurrentError(Errors.CommentsLoading))
       .finally(() => {
         setIsCommentsLoading(false);
@@ -60,13 +84,13 @@ export const PostDetails: React.FC<Props> = ({
         <div className="block">
           {isCommentsLoading && <Loader />}
 
-          {currentError === Errors.CommentsLoading && !isCommentsLoading && (
+          {currentError === Errors.CommentsLoading && (
             <div className="notification is-danger" data-cy="CommentsError">
               Something went wrong
             </div>
           )}
 
-          {comments.length === 0 && !isCommentsLoading && (
+          {currentError === Errors.NoComments && (
             <p className="title is-4" data-cy="NoCommentsMessage">
               No comments yet
             </p>
@@ -102,6 +126,11 @@ export const PostDetails: React.FC<Props> = ({
                   </div>
                 </article>
               ))}
+              {currentError === Errors.CommentDeleting && (
+                <div className="notification is-danger" data-cy="CommentsError">
+                  Something went wrong while deleting a comment
+                </div>
+              )}
             </>
           )}
 

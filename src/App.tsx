@@ -78,9 +78,9 @@ export const App = () => {
                   <p data-cy="NoSelectedUser">No user selected</p>
                 )}
 
-                {isPostsLoading && <Loader />}
+                {isPostsLoading && !currentError && <Loader />}
 
-                {currentError === Errors.PostsLoading && isPostsLoading && (
+                {currentError === Errors.PostsLoading && (
                   <div
                     className="notification is-danger"
                     data-cy="PostsLoadingError"
